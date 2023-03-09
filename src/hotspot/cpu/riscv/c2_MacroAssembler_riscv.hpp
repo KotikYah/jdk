@@ -198,4 +198,30 @@
 
  void rvv_vsetvli(BasicType bt, int length_in_bytes, Register tmp = t0);
 
+ void rvv_compare(VectorRegister dst, BasicType bt, int length_in_bytes,
+                  VectorRegister src1, VectorRegister src2, int cond, VectorMask vm = Assembler::unmasked);
+
+ void rvv_set_v0_mask(VectorRegister src);
+
+ // In Matcher::scalable_predicate_reg_slots,
+ // we assume each predicate register is one-eighth of the size of
+ // scalable vector register, one mask bit per vector byte.
+ void spill_mask(VectorRegister v, int offset, SEW sew = Assembler::e8){
+   add(t0, sp, offset);
+   vsetivli(t1, MaxVectorSize >> 3, sew);
+   vse8_v(v, t0);
+ }
+
+ void unspill_mask(VectorRegister v, int offset, SEW sew = Assembler::e8){
+   add(t0, sp, offset);
+   vsetivli(t1, MaxVectorSize >> 3, sew);
+   vle8_v(v, t0);
+ }
+
+ void spill_copy_mask_stack_to_stack(int src_offset, int dst_offset, int vec_reg_size_in_bytes){
+   assert(vec_reg_size_in_bytes % 16 == 0, "unexpected vector reg size");
+   unspill_mask(v0, src_offset);
+   spill_mask(v0, dst_offset);
+ }
+
 #endif // CPU_RISCV_C2_MACROASSEMBLER_RISCV_HPP
